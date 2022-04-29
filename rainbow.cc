@@ -8,7 +8,6 @@
 #include <iostream>
 #include <thread>
 
-using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::Canvas;
 using namespace std;
@@ -24,9 +23,11 @@ double GSPEED = 0.0003;
 int    SPOKES = 4;
 int    PULSELEN  = 1;
 double DECAY  = 0.95;
+double BRIGHTNESS = 0.8;
+//double BRIGHTNESS = 1;
 
-#define WIDTH  6
-#define HEIGHT 1
+#define WIDTH  3
+#define HEIGHT 2
 
 static int leds[WIDTH*32][HEIGHT*32][3];
 static double gturn;
@@ -53,6 +54,13 @@ unsigned part_x = 158;
 unsigned part_y = 4;
 const unsigned part_scale = 3;
 
+/*
+bool image_partial[part_height][part_width] = {
+{1,1,1,1,1},
+{1,1,1,0,1},
+{0,0,0,1,0},
+{0,0,0,0,0}};
+*/
 bool image_partial[part_height][part_width] = {
 {0,0,0,0,0},
 {0,1,0,0,0},
@@ -68,10 +76,10 @@ static void DrawFull(Canvas *canvas){
     for(int y = 0; y < HEIGHT*32; y++) {
       if(x < part_x or x >= part_x + part_scale*part_width
       or y < part_y or y >= part_y + part_scale*part_height){
-        canvas->SetPixel(x, y, leds[x][y][0], leds[x][y][1], leds[x][y][2]);
+        canvas->SetPixel(x, y, leds[x][y][0]*BRIGHTNESS, leds[x][y][1]*BRIGHTNESS, leds[x][y][2]*BRIGHTNESS);
       } else {
         if(inImage(x-part_x, y-part_y)){
-          canvas->SetPixel(x, y, 255, 255, 255);
+          canvas->SetPixel(x, y, 255*BRIGHTNESS, 255*BRIGHTNESS, 255*BRIGHTNESS);
         } else {
           canvas->SetPixel(x, y,   0,   0,   0);
         }
@@ -165,20 +173,18 @@ void initcolors(){
 }
 
 int main(int argc, char *argv[]) {
-  /*
-   * Set up GPIO pins. This fails when not running as root.
-   */
-  GPIO io;
-  if (!io.Init())
-    return 1;
-  
+
   /*
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
   int rows = 32;    // A 32x32 display. Use 16 when this is a 16x32 display.
   int chain = WIDTH;    // Number of boards chained together.
   int parallel = HEIGHT; // Number of chains in parallel (1..3). > 1 for plus or Pi2
-  Canvas *canvas = new RGBMatrix(&io, rows, chain, parallel);
+  RGBMatrix::Options options;
+  options.rows = 32;    // A 32x32 display. Use 16 when this is a 16x32 display.
+  options.chain_length = WIDTH;  // Number of boards chained together.
+  options.parallel = HEIGHT;      // Number of chains in parallel (1..3).
+  Canvas *canvas = RGBMatrix::CreateFromFlags(&argc, &argv, &options);
 
   initcolors();
   thread drawer(DrawOnCanvas, canvas);    // Using the canvas.

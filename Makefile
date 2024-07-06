@@ -1,4 +1,4 @@
-LED_BASE_DIR=../rpi-rgb-led-matrix
+LED_BASE_DIR ?= ../rpi-rgb-led-matrix
 
 LED_LIB_DIR=${LED_BASE_DIR}/lib
 LED_INCLUDE_DIR=${LED_BASE_DIR}/include
